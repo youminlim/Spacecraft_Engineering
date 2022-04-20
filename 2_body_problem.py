@@ -2,6 +2,8 @@
 
 #%%% Importing libraries
 import numpy as np
+from numpy import sin
+from numpy import cos
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp as ode
 
@@ -32,17 +34,27 @@ def planet_radius(planet_name):
 
 def planet_mu(planet_name):
     
-    # Initialise gravitational constant
     G = 6.67 * 10 ** -11
     
     if planet_name == "Earth":
-        M = 5.972 * 10 ** 24
-        mu = G * M
-    else: 
+        M = 5972 * 10 ** 24
+        mu = G * M 
+    else:
         mu = 0
         
     return mu
 
+def planet():
+    
+    theta = np.linspace(0, 2*np.pi, 200)
+    phi = np.linspace(0, np.pi, 100)
+    
+    x = cos(theta)*sin(phi)
+    y = sin(theta)*sin(phi)
+    z = cos(phi)
+    
+    return x, y, z
+    
 def plotter(state_matrix):
     
     # Unpack state matrix 
@@ -71,18 +83,11 @@ if __name__ == "__main__":
     y0 = r0 + v0
     
     # Time step
-    # (2 * np.pi * np.linalg.norm(r0)) / np.sqrt(mu)
-    tspan = np.array([0, 100 * 60]) # Period of orbit
-    dt = 100 # Timestep
-    n = int(np.ceil(tspan[1] / dt))
-    
-    # Initialise state arrays to store values
-    y = np.zeros((n,6))
-    t = np.zeros((n,1))
-    y[0] = np.array(y0)
+    # 
+    tspan = np.array([0, 2 * np.pi * np.linalg.norm(r0) / v_initial]) # Period of orbit
     
     # Initialise ODE solver
-    solver = ode(twobody_orbit, tspan, y0, args=[mu])
+    solver = ode(twobody_orbit, tspan, y0, args = [mu], max_step=0.0001)
     t = solver.t
     y = solver.y
     y = np.transpose(y)
