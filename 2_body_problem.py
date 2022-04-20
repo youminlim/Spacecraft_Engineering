@@ -44,27 +44,59 @@ def planet_mu(planet_name):
         
     return mu
 
-def planet():
+def planet_coordinates(planet_name):
     
-    theta = np.linspace(0, 2*np.pi, 200)
-    phi = np.linspace(0, np.pi, 100)
+    # Initialise planet radius
+    r = planet_radius(planet_name)
     
-    x = cos(theta)*sin(phi)
-    y = sin(theta)*sin(phi)
-    z = cos(phi)
+    # Set parametric equation limits
+    theta, phi = np.mgrid[0 : 2*np.pi : 30j, 0 : np.pi : 20j]
+    
+    # Compute sphere coordinates
+    x = r * cos(theta) * sin(phi)
+    y = r * sin(theta) * sin(phi)
+    z = r * cos(phi)
     
     return x, y, z
     
-def plotter(state_matrix):
+def plot(state_matrix, planet_name):
     
     # Unpack state matrix 
     rx = state_matrix[:,0]
     ry = state_matrix[:,1]
     rz = state_matrix[:,2]
+    r = [rx, ry, rz]
     
-    ax = plt.figure().add_subplot(projection='3d')
-    ax.plot(rx, ry, rz)
+    # Define planet shape coordinates
+    x, y, z = planet_coordinates(planet_name)
 
+    # Plot
+    plt.rcParams["figure.figsize"] = [18, 6]
+    plt.style.use('dark_background')
+    fig = plt.figure()
+    ax = fig.add_subplot(projection = '3d')
+    
+    # Massive body plot
+    ax.plot_surface(x, y, z, cmap = 'Blues')
+    x, y, z = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+    u, v, w = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    ax.quiver(x, y, z, u, v, w, color ='k')
+    
+    # Trajectory plot
+    ax.plot(rx, ry, rz, 'w', label = 'Trajectory')
+    ax.plot(rx[0], ry[0], rz[0], 'wo', label = 'Initial Location')
+    
+    # Plot parameters
+    max_val = np.max(r)
+    ax.set_title('Trajectory of satellite')
+    ax.set_xlim([-max_val, max_val])
+    ax.set_ylim([-max_val, max_val])
+    ax.set_zlim([-max_val, max_val])
+    ax.set_xlabel(['x (km)'])
+    ax.set_ylabel(['y (km)'])
+    ax.set_zlabel(['z (km)'])
+    plt.legend()
+    
 #%%% Main program
 if __name__ == "__main__":
     
@@ -74,7 +106,7 @@ if __name__ == "__main__":
     mu = planet_mu(planet)
     
     # Initial orbit parameters
-    altitude = R + 500 # km
+    altitude = R + 10000 # km
     v_initial = np.sqrt(mu/altitude) # km / s
     
     # Initial state vector
@@ -83,7 +115,6 @@ if __name__ == "__main__":
     y0 = r0 + v0
     
     # Time step
-    # 
     tspan = np.array([0, 2 * np.pi * np.linalg.norm(r0) / v_initial]) # Period of orbit
     
     # Initialise ODE solver
@@ -92,4 +123,5 @@ if __name__ == "__main__":
     y = solver.y
     y = np.transpose(y)
     
-    plotter(y)
+    # Plot results
+    plot(y, planet)
