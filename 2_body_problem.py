@@ -44,6 +44,38 @@ def planet_mu(planet_name):
         
     return mu
 
+def euler_rotation(angle, rotation_element):
+    
+    # Define rotation matrices
+    if rotation_element == 1:
+        R = np.array([1, 0, 0], [0, cos(angle), sin(angle)], [0, -sin(angle), cos(angle)])
+    elif rotation_element == 3:
+        R = np.array([cos(angle), sin(angle), 0], [-sin(angle), cos(angle), 0], [0, 0, 1])
+        
+    return R
+
+def rotate_plane(state_matrix, inclination, ascension, argument):
+    
+    # Unpack state matrix
+    r = state_matrix[:,:3]
+    v = state_matrix[:,3:]
+    
+    # Define orbital elements
+    i = inclination     # Inclination of orbit (degrees)
+    omega = ascension   # Right ascension of the ascending node (degrees)
+    w = argument        # Argument of the perigee (degrees)
+    
+    # Define Euler rotations
+    R1_i = euler_rotation(-i, 1)
+    R3_omega = euler_rotation(-omega, 3)
+    R3_w = euler_rotation(-w, 3)
+    
+    # Apply Euler rotations
+    r = R3_omega * R1_i * R3_w * r
+    v = R3_omega * R1_i * R3_w * v
+    
+    return [r, v]
+
 def planet_coordinates(planet_name):
     
     # Initialise planet radius
