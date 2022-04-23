@@ -48,17 +48,17 @@ def euler_rotation(angle, rotation_element):
     
     # Define rotation matrices
     if rotation_element == 1:
-        R = np.array([1, 0, 0], [0, cos(angle), sin(angle)], [0, -sin(angle), cos(angle)])
+        R = np.array([[1, 0, 0], [0, cos(angle), sin(angle)], [0, -sin(angle), cos(angle)]])
     elif rotation_element == 3:
-        R = np.array([cos(angle), sin(angle), 0], [-sin(angle), cos(angle), 0], [0, 0, 1])
+        R = np.array([[cos(angle), sin(angle), 0], [-sin(angle), cos(angle), 0], [0, 0, 1]])
         
     return R
 
 def rotate_plane(state_matrix, inclination, ascension, argument):
     
     # Unpack state matrix
-    r = state_matrix[:,:3]
-    v = state_matrix[:,3:]
+    r = state_matrix[:3,:]
+    v = state_matrix[3:,:]
     
     # Define orbital elements
     i = inclination     # Inclination of orbit (degrees)
@@ -69,12 +69,13 @@ def rotate_plane(state_matrix, inclination, ascension, argument):
     R1_i = euler_rotation(-i, 1)
     R3_omega = euler_rotation(-omega, 3)
     R3_w = euler_rotation(-w, 3)
+    rotation = np.matmul(np.matmul(R3_omega, R1_i), R3_w)
     
     # Apply Euler rotations
-    r = R3_omega * R1_i * R3_w * r
-    v = R3_omega * R1_i * R3_w * v
+    r = np.matmul(rotation, r)
+    v = np.matmul(rotation, v)
     
-    return [r, v]
+    return np.concatenate((r, v), axis = 0)
 
 def planet_coordinates(planet_name):
     
@@ -138,22 +139,25 @@ if __name__ == "__main__":
     mu = planet_mu(planet)
     
     # Initial orbit parameters
-    altitude = R + 10000 # km
+    altitude = R + 35800 # km
     v_initial = np.sqrt(mu/altitude) # km / s
     
     # Initial state vector
     r0 = [altitude, 0, 0]
     v0 = [0, v_initial, 0]
-    y0 = r0 + v0
+    GEO0 = r0 + v0
     
     # Time step
     tspan = np.array([0, 2 * np.pi * np.linalg.norm(r0) / v_initial]) # Period of orbit
     
     # Initialise ODE solver
-    solver = ode(twobody_orbit, tspan, y0, args = [mu], max_step=0.0001)
-    t = solver.t
-    y = solver.y
-    y = np.transpose(y)
+    solver = ode(twobody_orbit, tspan, GEO0, args = [mu], max_step=0.0001)
+    GEO = solver.y
+    
+    # Rotate states
+    GEO = rotate_plane(GEO, 45, 10, 0)
+    
+    GEO = np.transpose(GEO)
     
     # Plot results
-    plot(y, planet)
+    plot(GEO, planet)
