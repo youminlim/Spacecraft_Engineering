@@ -69,11 +69,10 @@ def rotate_plane(state_matrix, inclination, ascension, argument):
     R1_i = euler_rotation(-i, 1)
     R3_omega = euler_rotation(-omega, 3)
     R3_w = euler_rotation(-w, 3)
-    rotation = np.matmul(np.matmul(R3_omega, R1_i), R3_w)
     
     # Apply Euler rotations
-    r = np.matmul(rotation, r)
-    v = np.matmul(rotation, v)
+    r = np.matmul(R3_omega, np.matmul(R1_i, np.matmul(R3_w, r)))
+    v = np.matmul(R3_omega, np.matmul(R1_i, np.matmul(R3_w, v)))
     
     return np.concatenate((r, v), axis = 0)
 
