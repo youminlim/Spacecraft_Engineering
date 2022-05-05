@@ -154,7 +154,7 @@ if __name__ == "__main__":
     GEO = solver.y
     
     # Rotate states
-    GEO = rotate_plane(GEO, 45, 10, 0)
+    GEO = rotate_plane(GEO, 0, 0, 0)
     
     GEO = np.transpose(GEO)
     
