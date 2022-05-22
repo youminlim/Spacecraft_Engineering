@@ -6,7 +6,7 @@ from numpy import sin
 from numpy import cos
 
 #%% Functions
-def kepler(M, e):
+def solver(M, e):
     # A solver to compute the eccentric anomaly at any given time via the newton raphson iteration
     E = M
     error = 1
@@ -29,6 +29,22 @@ if __name__ == "__main__" :
     
     #%%% Import libraries
     import matplotlib.pyplot as plt
+    
+    #%%% Define functions
+    def plotter(x, y):
+        
+        # Define earth to plot
+        r = r_earth
+        theta = np.linspace(0, 2*np.pi, 1000)
+        x_e = r * cos(theta)
+        y_e = r * sin(theta)
+        
+        fig, ax = plt.subplots()
+        earth_plot, = plt.plot(x_e, y_e, label = 'Earth')
+        trajectory, = plt.plot(x, y, label = 'Trajectory')
+        ax.legend(handles = [earth_plot, trajectory], loc = 'upper right')
+        plt.axis('square')
+        plt.show()
 
     #%%% Define program constants
     ''' Mission profile : initial altitude 800km, circular orbit'''
@@ -36,32 +52,29 @@ if __name__ == "__main__" :
     r_earth = 6379
     G = 6.67e-11
     M = 5.972e24
-    e = 0.9
+    [e, a, i, RAAN, omega, M0] = [0, altitude+r_earth, 0, 0, 0, 60]
+    M0 = np.deg2rad(M0)
 
     #%%% Program
     mu = G * M * 10 ** -9
-    a = altitude + r_earth
     period = 2 * np.pi * np.sqrt(a**3 / mu)
     [tmin, tmax] = [0, period]
-    timesteps = np.linspace(tmin, tmax, 1000)
+    dt = np.linspace(tmin, tmax, 1000)
     
     # COEs
-    n = 2 * np.pi / period
-    M = n * timesteps    
-    E = np.zeros(len(M))
-    x = np.zeros(len(M))
-    y = np.zeros(len(M))
+    E = np.zeros(len(dt))
+    x = np.zeros(len(dt))
+    y = np.zeros(len(dt))
+    n = np.sqrt(mu / a**3)
     
     # Calculate eccentric anomaly
-    for i in range(len(M)):
-        E[i] = kepler(M[i], e)
+    for i in range(len(dt)):
+        M = M0 + (n * dt[i])
+        E[i] = solver(M, e)
         x[i] = a * (cos(E[i]) - e)
         y[i] = a * sin(E[i]) * np.sqrt(1 - e**2)
     
-    plt.plot(x,y)
-    plt.axis('square')
-    plt.show()
-    
+    plotter(x, y)
     
     
     
