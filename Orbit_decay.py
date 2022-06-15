@@ -14,9 +14,9 @@ mu = G * M * 10 ** -9 # earth gravitaional parameter - km³/s²
 
 # initialise spacecraft parameters
 BC = 0.00000229         # ballistic coefficient
-m = 1000                # spacecraft mass - kg
-altitude0 = 60          # spacecraft initial altitude - km
-[e, a, i, RAAN, omega, M0] = [0, altitude0 + r_earth, 0, 0, 0, 60]
+m = 10000                # spacecraft mass - kg
+altitude0 = 100          # spacecraft initial altitude - km
+[e, a, i, RAAN, omega, M0] = [0, altitude0 + r_earth, 0, 0, 0, 0]
 M0 = np.deg2rad(M0)
 
 #%% Functions
@@ -99,24 +99,56 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     
     #%%% Define functions
-    def plotter(x, y):
+    def plotter(dr, dt):
         
         # Define earth to plot
-        r = r_earth
+        r = 1
         theta = np.linspace(0, 2*np.pi, 1000)
         x_e = r * cos(theta)
         y_e = r * sin(theta)
         
-        fig, ax = plt.subplots()
+        
+        # calculating (x,y) coordinates of deorbit trajectory
+        timescale = np.linspace(0, dt * len(dr), len(dr)) / (3600 * 24)
+        x = np.zeros(len(dr))
+        y = np.zeros(len(dr))
+        nu = np.linspace(0, 2*np.pi, len(dr))
+        for i in range(len(dr)):
+            x[i] = (dr[i] / r_earth) * cos(nu[i])
+            y[i] = (dr[i] / r_earth) * sin(nu[i])
+        
+        # plot
+        fig = plt.figure()
+        
+        ax1 = fig.add_subplot()
+        ax1.set_title('Deorbit trajectory of spacecraft')
+        ax1.set_ylabel('y / km')
+        ax1.set_xlabel('x / km')
         earth_plot, = plt.plot(x_e, y_e, label = 'Earth')
         trajectory, = plt.plot(x, y, label = 'Trajectory')
-        ax.legend(handles = [earth_plot, trajectory], loc = 'upper right')
+        ax1.legend(handles = [earth_plot, trajectory], loc = 'upper right')
         plt.axis('square')
+        
+        # reformatting data for plotting
+        for i in range(len(dr)):
+            dr[i] = dr[i] - r_earth
+        dr[-1] = 0
+        
+        fig = plt.figure()
+        
+        ax2 = fig.add_subplot()
+        ax2.set_title('Altitude decay with respect to time')
+        ax2.set_ylabel('Altitude / km')
+        ax2.set_xlabel('Time / days')
+        plt.plot(timescale, dr)
+        
         plt.show()
+        
+        return timescale
     
     #%%% Program
     mu = G * M * 10 ** -9
-    dt = 10   # timestep - s
+    dt = 3600   # timestep - hours
     n = np.sqrt(mu / a**3)
     
     # initialise solver parameters
@@ -144,8 +176,8 @@ if __name__ == "__main__":
         altitude = r - r_earth
         dr.append(r)
         i += 1
-        
-    plt.plot(dr)
+    
+    timescale = plotter(dr, dt)
     
     
     
